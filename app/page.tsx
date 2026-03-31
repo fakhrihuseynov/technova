@@ -116,7 +116,7 @@ function LandingPage({
               ) : (
                 <MapPin className="w-5 h-5" />
               )}
-              {detecting ? "Detecting location…" : "Use My Location"}
+              {detecting ? "Detecting location…" : "Search Next To Me"}
               {!detecting && <ChevronRight className="w-4 h-4" />}
             </span>
           </button>
