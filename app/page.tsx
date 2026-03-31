@@ -11,15 +11,12 @@ interface Location {
   label: string;
 }
 
-// ─── Geocode helper (client-safe, no API key needed) ─────────────────────────
+// ─── Geocode via server-side proxy (avoids Nominatim CORS restrictions) ────────
 async function geocodeCity(query: string): Promise<Location | null> {
-  const res = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&addressdetails=0`,
-    { headers: { "Accept-Language": "en", "User-Agent": "TechNova/1.0" } }
-  );
+  const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
   if (!res.ok) return null;
   const data = await res.json();
-  if (!data.length) return null;
+  if (!Array.isArray(data) || !data.length) return null;
   return {
     lat: parseFloat(data[0].lat),
     lng: parseFloat(data[0].lon),
@@ -46,12 +43,20 @@ function LandingPage({
     setDetecting(true);
     setErr("");
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        onLocation({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          label: "Your Location",
-        });
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        // Resolve a human-readable city name from the GPS coords
+        let label = "Your Location";
+        try {
+          const res = await fetch(`/api/geocode?lat=${lat}&lng=${lng}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.label) label = data.label;
+          }
+        } catch {
+          // Non-fatal — fall back to generic label
+        }
+        onLocation({ lat, lng, label });
       },
       () => {
         setErr("Location access denied. Search a city manually below.");
@@ -158,7 +163,7 @@ function LandingPage({
         {/* Footer note */}
         <p className="text-xs text-gray-400 max-w-xs">
           Events powered by{" "}
-          <span className="font-medium text-gray-500">Ticketmaster</span> ·
+          <a href="https://confs.tech" target="_blank" rel="noopener noreferrer" className="font-medium text-gray-500 hover:underline">confs.tech</a> ·
           Summaries by{" "}
           <span className="font-medium text-gray-500">Ollama AI</span>
         </p>
@@ -186,12 +191,15 @@ export default function Home() {
         currentLocation={location.label}
       />
       <main className="max-w-5xl mx-auto px-4">
-        <div className="pt-4 pb-2">
+        <div className="pt-4 pb-2 flex flex-col gap-0.5">
           <p className="text-sm text-gray-500">
-            Showing tech events near{" "}
-            <span className="font-medium text-gray-700 truncate inline-block max-w-xs align-bottom">
+            Tech conferences near{" "}
+            <span className="font-semibold text-gray-800 truncate inline-block max-w-xs align-bottom">
               {location.label}
             </span>
+          </p>
+          <p className="text-xs text-gray-400">
+            Within 3,000 km &middot; online events worldwide &middot; sorted by proximity
           </p>
         </div>
         <EventGrid lat={location.lat} lng={location.lng} />

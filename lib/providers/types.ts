@@ -10,6 +10,8 @@ export interface TechEvent {
   country: string;
   /** Official event webpage */
   url: string;
+  /** Topic/category label (e.g. "javascript", "devops") */
+  category?: string;
   contacts: string[];
   socialLinks: string[];
   images: string[];

@@ -14,21 +14,9 @@ interface NominatimResult {
   display_name: string;
 }
 
-// ─── Geocode a free-text query via OpenStreetMap Nominatim ────────────────────
-// No API key needed. Rate-limited to 1 req/s — fine for interactive use.
+// ─── Geocode via server-side proxy (avoids Nominatim CORS restrictions) ────────
 async function geocode(query: string): Promise<NominatimResult | null> {
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-    query
-  )}&format=json&limit=1&addressdetails=0`;
-
-  const res = await fetch(url, {
-    headers: {
-      "Accept-Language": "en",
-      // Nominatim requires a descriptive User-Agent
-      "User-Agent": "TechNova/1.0 (tech-events-app)",
-    },
-  });
-
+  const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
   if (!res.ok) throw new Error(`Geocoding failed: ${res.status}`);
   const data: NominatimResult[] = await res.json();
   return data[0] ?? null;

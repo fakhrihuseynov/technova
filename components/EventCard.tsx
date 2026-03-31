@@ -77,13 +77,32 @@ export default function EventCard({ event }: EventCardProps) {
   }, [event.id, event.name, event.venueName, event.city, event.country]);
 
   const coverImg = event.images?.[0];
-  const locationParts = [event.venueName, event.address, event.city, event.country]
-    .filter(Boolean)
+  const locationParts = [event.venueName, event.city, event.country]
+    .filter((p, i, arr) => p && arr.indexOf(p) === i) // deduplicate adjacent equal parts
     .join(", ");
+
+  // Deterministic gradient + initials derived from event name
+  const GRADIENTS = [
+    "from-violet-500 to-indigo-600",
+    "from-sky-500 to-cyan-600",
+    "from-emerald-500 to-teal-600",
+    "from-amber-500 to-orange-600",
+    "from-rose-500 to-pink-600",
+    "from-fuchsia-500 to-purple-600",
+    "from-lime-500 to-green-600",
+    "from-orange-500 to-red-600",
+  ];
+  const nameHash = event.name.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  const gradient = GRADIENTS[nameHash % GRADIENTS.length];
+  const initials = event.name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
 
   return (
     <article className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col">
-      {/* Cover image */}
+      {/* Cover image / placeholder */}
       {coverImg ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -93,10 +112,18 @@ export default function EventCard({ event }: EventCardProps) {
           loading="lazy"
         />
       ) : (
-        <div className="w-full h-44 bg-gradient-to-br from-green-100 via-green-50 to-white flex items-center justify-center">
-          <span className="text-4xl font-extrabold text-green-200 select-none">
-            TN
+        <div className={`w-full h-44 bg-gradient-to-br ${gradient} flex flex-col items-center justify-center gap-2 relative overflow-hidden`}>
+          {/* Decorative circles */}
+          <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10" />
+          <div className="absolute -bottom-8 -left-4 w-36 h-36 rounded-full bg-black/10" />
+          <span className="text-5xl font-extrabold text-white/90 drop-shadow select-none z-10">
+            {initials}
           </span>
+          {event.category && (
+            <span className="text-xs font-semibold text-white/80 uppercase tracking-widest z-10">
+              {event.category}
+            </span>
+          )}
         </div>
       )}
 

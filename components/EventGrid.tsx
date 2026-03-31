@@ -118,12 +118,6 @@ export default function EventGrid({ lat, lng }: EventGridProps) {
       {error && (
         <div className="mb-4 px-4 py-4 bg-red-50 border border-red-200 rounded-xl flex flex-col gap-2">
           <p className="text-red-600 text-sm font-medium">{error}</p>
-          {error.toLowerCase().includes("not configured") && (
-            <p className="text-red-400 text-xs">
-              Add your <code className="font-mono bg-red-100 px-1 rounded">TICKETMASTER_API_KEY</code> to{" "}
-              <code className="font-mono bg-red-100 px-1 rounded">.env.local</code> and restart the dev server.
-            </p>
-          )}
           <button
             onClick={() => fetchPage(0, true)}
             className="self-start text-xs text-red-600 underline hover:text-red-800"

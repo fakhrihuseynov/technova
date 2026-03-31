@@ -4,7 +4,8 @@ const BASE_URL = "https://app.ticketmaster.com/discovery/v2";
 
 function getApiKey(): string {
   const key = process.env.TICKETMASTER_API_KEY;
-  if (!key) throw new Error("TICKETMASTER_API_KEY is not configured.");
+  if (!key || key.startsWith("YOUR_"))
+    throw new Error("TICKETMASTER_API_KEY is not configured.");
   return key;
 }
 
@@ -42,16 +43,15 @@ function normaliseEvent(raw: any): TechEvent {
   };
 }
 
-// ─── Derive current-month start/end dates ─────────────────────────────────────
-function currentMonthRange(): { startDate: string; endDate: string } {
+// ─── 90-day window from today ──────────────────────────────────────────────────
+function next90DaysRange(): { startDate: string; endDate: string } {
   const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  return {
-    startDate: `${y}-${m}-01`,
-    endDate: `${y}-${m}-${String(lastDay).padStart(2, "0")}`,
-  };
+  const end = new Date(now);
+  end.setDate(end.getDate() + 90);
+  function fmt(d: Date) {
+    return d.toISOString().slice(0, 10);
+  }
+  return { startDate: fmt(now), endDate: fmt(end) };
 }
 
 // ─── Main fetch function ───────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ export async function fetchTechEvents(
   const {
     lat,
     lng,
-    radiusKm = 50,
+    radiusKm = 100,   // wider default — better for sparse regions
     page = 0,
     size = 20,
   } = params;
@@ -69,7 +69,7 @@ export async function fetchTechEvents(
   const { startDate, endDate } = {
     startDate: params.startDate,
     endDate: params.endDate,
-    ...(!params.startDate && !params.endDate ? currentMonthRange() : {}),
+    ...(!params.startDate && !params.endDate ? next90DaysRange() : {}),
   };
 
   const url = new URL(`${BASE_URL}/events.json`);
@@ -77,9 +77,8 @@ export async function fetchTechEvents(
   url.searchParams.set("latlong", `${lat},${lng}`);
   url.searchParams.set("radius", String(radiusKm));
   url.searchParams.set("unit", "km");
-  // Use keyword search for tech events — Ticketmaster has no dedicated
-  // "technology" segment, so keyword is the most reliable filter.
-  url.searchParams.set("keyword", "tech");
+  // No keyword filter — Ticketmaster's tech inventory is sparse.
+  // Cast the net wide and rely on AI enrichment to surface relevance.
   url.searchParams.set("page", String(page));
   url.searchParams.set("size", String(size));
   url.searchParams.set("sort", "date,asc");
