@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Calendar,
   MapPin,
@@ -8,6 +8,7 @@ import {
   Tag,
   Users,
   Globe,
+  Wifi,
 } from "lucide-react";
 import type { TechEvent, AIEnrichment } from "@/lib/providers/types";
 
@@ -43,43 +44,72 @@ function AISkeleton() {
 export default function EventCard({ event }: EventCardProps) {
   const [ai, setAi] = useState<AIEnrichment | null>(null);
   const [aiLoading, setAiLoading] = useState(true);
+  const [ogImage, setOgImage] = useState<string | null>(null);
+  const cardRef = useRef<HTMLElement>(null);
 
+  // Fetch OG image from the conference URL server-side proxy
+  useEffect(() => {
+    if (!event.url) return;
+    let cancelled = false;
+    fetch(`/api/og?url=${encodeURIComponent(event.url)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled && d?.image) setOgImage(d.image); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [event.url]);
+
+  // Only call Ollama when this card enters the viewport — avoids 20 simultaneous
+  // requests on mount which queue up and make every card appear stuck loading.
   useEffect(() => {
     let cancelled = false;
 
-    async function enrich() {
-      try {
-        const res = await fetch("/api/ai", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            eventId: event.id,
-            eventName: event.name,
-            description: [event.venueName, event.city, event.country]
-              .filter(Boolean)
-              .join(", "),
-          }),
-        });
-        if (!res.ok) return;
-        const data: AIEnrichment = await res.json();
-        if (!cancelled) setAi(data);
-      } catch {
-        // Silently degrade — card still renders without AI
-      } finally {
-        if (!cancelled) setAiLoading(false);
-      }
-    }
+    const node = cardRef.current;
+    if (!node) return;
 
-    enrich();
-    return () => {
-      cancelled = true;
-    };
-  }, [event.id, event.name, event.venueName, event.city, event.country]);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
 
-  const coverImg = event.images?.[0];
-  const locationParts = [event.venueName, event.city, event.country]
-    .filter((p, i, arr) => p && arr.indexOf(p) === i) // deduplicate adjacent equal parts
-    .join(", ");
+        async function enrich() {
+          try {
+            const res = await fetch("/api/ai", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                eventId: event.id,
+                eventName: event.name,
+                description: [event.category, event.venueName, event.city, event.country]
+                  .filter(Boolean)
+                  .join(", "),
+              }),
+            });
+            if (!res.ok) return;
+            const data: AIEnrichment = await res.json();
+            if (!cancelled) setAi(data);
+          } catch {
+            // Silently degrade
+          } finally {
+            if (!cancelled) setAiLoading(false);
+          }
+        }
+
+        enrich();
+      },
+      { rootMargin: "200px" } // start fetching slightly before the card is fully visible
+    );
+
+    observer.observe(node);
+    return () => { cancelled = true; observer.disconnect(); };
+  }, [event.id, event.name, event.category, event.venueName, event.city, event.country]);
+
+  const coverImg = ogImage ?? event.images?.[0];
+  const isOnline = event.venueName === "Online Event" || event.country === "Worldwide";
+  const locationParts = isOnline
+    ? "Online"
+    : [event.venueName, event.city, event.country]
+        .filter((p, i, arr) => p && arr.indexOf(p) === i)
+        .join(", ");
 
   // Deterministic gradient + initials derived from event name
   const GRADIENTS = [
@@ -101,31 +131,49 @@ export default function EventCard({ event }: EventCardProps) {
     .join("");
 
   return (
-    <article className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col">
-      {/* Cover image / placeholder */}
-      {coverImg ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={coverImg}
-          alt={event.name}
-          className="w-full h-44 object-cover"
-          loading="lazy"
+    <article ref={cardRef} className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col relative cursor-pointer">
+      {/* Stretched link — makes whole card clickable without nesting <a> tags */}
+      {event.url && (
+        <a
+          href={event.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute inset-0 z-10"
+          aria-label={`Open ${event.name}`}
         />
-      ) : (
-        <div className={`w-full h-44 bg-gradient-to-br ${gradient} flex flex-col items-center justify-center gap-2 relative overflow-hidden`}>
-          {/* Decorative circles */}
-          <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10" />
-          <div className="absolute -bottom-8 -left-4 w-36 h-36 rounded-full bg-black/10" />
-          <span className="text-5xl font-extrabold text-white/90 drop-shadow select-none z-10">
-            {initials}
-          </span>
-          {event.category && (
-            <span className="text-xs font-semibold text-white/80 uppercase tracking-widest z-10">
-              {event.category}
-            </span>
-          )}
-        </div>
       )}
+      {/* Cover image / placeholder — always show gradient, overlay real image when loaded */}
+      <div className={`w-full h-44 relative overflow-hidden bg-gradient-to-br ${gradient} flex flex-col items-center justify-center gap-2`}>
+        {/* Decorative circles always visible beneath real image */}
+        <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10" />
+        <div className="absolute -bottom-8 -left-4 w-36 h-36 rounded-full bg-black/10" />
+        <span className="text-5xl font-extrabold text-white/90 drop-shadow select-none z-10">
+          {initials}
+        </span>
+        {event.category && (
+          <span className="text-xs font-semibold text-white/80 uppercase tracking-widest z-10">
+            {event.category}
+          </span>
+        )}
+        {/* Online badge */}
+        {isOnline && (
+          <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-green-500 text-white text-xs font-semibold rounded-full px-2.5 py-1 shadow-sm">
+            <Wifi className="w-3 h-3" />
+            Online
+          </div>
+        )}
+        {/* Real OG image fades in on top once loaded */}
+        {coverImg && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={coverImg}
+            alt={event.name}
+            className="absolute inset-0 w-full h-full object-cover animate-fadeIn"
+            loading="lazy"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
+        )}
+      </div>
 
       <div className="p-4 flex flex-col gap-3 flex-1">
         {/* Title */}
@@ -141,7 +189,10 @@ export default function EventCard({ event }: EventCardProps) {
           </div>
           {locationParts && (
             <div className="flex items-start gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
+              {isOnline
+                ? <Wifi className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
+                : <MapPin className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
+              }
               <span className="line-clamp-2">{locationParts}</span>
             </div>
           )}
@@ -181,14 +232,23 @@ export default function EventCard({ event }: EventCardProps) {
               )}
             </>
           ) : (
-            <p className="text-gray-400 italic text-xs my-auto">
-              AI enrichment unavailable for this event.
-            </p>
+            <div className="flex flex-col gap-2 my-auto">
+              {event.category && (
+                <p className="text-xs text-green-700 font-semibold uppercase tracking-wide">
+                  {event.category} conference
+                </p>
+              )}
+              <p className="text-gray-500 text-xs">
+                {isOnline
+                  ? "Attend this event online from anywhere in the world."
+                  : `In-person event in ${event.city || event.country || "a listed city"}.`}
+              </p>
+            </div>
           )}
         </div>
 
-        {/* Action buttons */}
-        <div className="flex flex-wrap gap-2 mt-auto pt-1">
+        {/* Action buttons — sit above the stretched link via z-index */}
+        <div className="relative z-20 flex flex-wrap gap-2 mt-auto pt-1">
           {event.url && (
             <a
               href={event.url}
