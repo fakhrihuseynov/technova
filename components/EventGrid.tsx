@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Search, Globe, X, Navigation } from "lucide-react";
+import { Search, Globe, X, Navigation, Wifi } from "lucide-react";
 import EventCard from "./EventCard";
 import type { TechEvent } from "@/lib/providers/types";
 
@@ -45,6 +45,7 @@ export default function EventGrid({ lat, lng }: EventGridProps) {
   const [country, setCountry] = useState("all");
   const [availableCountries, setAvailableCountries] = useState<string[]>([]);
   const [maxDist, setMaxDist] = useState("1000");
+  const [showOnline, setShowOnline] = useState(false);
   const [docked, setDocked] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -68,8 +69,9 @@ export default function EventGrid({ lat, lng }: EventGridProps) {
           radiusKm: maxDist,
         });
         if (q) params.set("q", q);
+        if (showOnline) params.set("includeOnline", "1");
         if (countryFilter === "__online__") {
-          params.set("onlineOnly", "1");
+          params.set("includeOnline", "1");
         } else if (countryFilter && countryFilter !== "all") {
           params.set("country", countryFilter);
         }
@@ -98,7 +100,7 @@ export default function EventGrid({ lat, lng }: EventGridProps) {
         setLoading(false);
       }
     },
-    [lat, lng, maxDist]
+    [lat, lng, maxDist, showOnline]
   );
 
   // Dock the filter bar when it scrolls past the header (sticky top-0 header ≈ 56px)
@@ -161,7 +163,7 @@ export default function EventGrid({ lat, lng }: EventGridProps) {
   }, [fetchPage, search, country]);
 
   const hasMore = page < totalPages - 1;
-  const isFiltered = search !== "" || country !== "all" || maxDist !== "1000";
+  const isFiltered = search !== "" || country !== "all" || maxDist !== "1000" || showOnline;
 
   return (
     <div className="py-4">
@@ -173,11 +175,11 @@ export default function EventGrid({ lat, lng }: EventGridProps) {
       <div
         className={`sticky top-[57px] z-40 transition-all duration-200 ${
           docked
-            ? "bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm -mx-4 px-4 py-2.5 mb-3"
+            ? "bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm -ml-[max(1rem,calc(50vw-31rem))] w-screen py-2.5 mb-3"
             : "mb-5"
         }`}
       >
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row gap-2">
+        <div className={`max-w-5xl mx-auto flex flex-col sm:flex-row gap-2${docked ? " px-4" : ""}`}>
         {/* Name search */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -230,7 +232,6 @@ export default function EventGrid({ lat, lng }: EventGridProps) {
               className="appearance-none border border-gray-300 rounded-xl pl-9 pr-8 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent min-w-[160px] cursor-pointer"
             >
               <option value="all">All countries</option>
-              <option value="__online__">🌐 Online only</option>
               {availableCountries.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -245,10 +246,23 @@ export default function EventGrid({ lat, lng }: EventGridProps) {
           </div>
         )}
 
+        {/* Online toggle */}
+        <button
+          onClick={() => setShowOnline((v) => !v)}
+          className={`flex items-center gap-1.5 text-xs font-medium rounded-xl px-3 py-2.5 border transition-colors whitespace-nowrap ${
+            showOnline
+              ? "bg-green-600 text-white border-green-600 shadow-sm"
+              : "bg-white text-gray-500 border-gray-300 hover:border-green-400 hover:text-green-600"
+          }`}
+        >
+          <Wifi className="w-3.5 h-3.5" />
+          Online
+        </button>
+
         {/* Clear-all badge */}
         {isFiltered && (
           <button
-            onClick={() => { clearSearch(); setCountry("all"); setMaxDist("1000"); }}
+            onClick={() => { clearSearch(); setCountry("all"); setMaxDist("1000"); setShowOnline(false); }}
             className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 hover:bg-green-100 rounded-xl px-3 py-2 transition-colors whitespace-nowrap"
           >
             <X className="w-3 h-3" />
@@ -284,7 +298,7 @@ export default function EventGrid({ lat, lng }: EventGridProps) {
           </p>
           {isFiltered && (
             <button
-              onClick={() => { clearSearch(); setCountry("all"); setMaxDist("1000"); }}
+              onClick={() => { clearSearch(); setCountry("all"); setMaxDist("1000"); setShowOnline(false); }}
               className="mt-4 text-sm text-green-600 underline hover:text-green-800"
             >
               Clear all filters

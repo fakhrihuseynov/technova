@@ -31,8 +31,8 @@ export interface FetchEventsParams {
   q?: string;
   /** Filter to a specific country (exact match from dataset) */
   country?: string;
-  /** Show only purely-online events */
-  onlineOnly?: boolean;
+  /** Include purely-online events in results (default: false → excluded) */
+  includeOnline?: boolean;
 }
 
 // Pagination-aware response

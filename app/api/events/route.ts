@@ -23,13 +23,13 @@ export async function GET(req: NextRequest) {
   const endDate = searchParams.get("endDate") ?? undefined;
   const q = searchParams.get("q") ?? undefined;
   const country = searchParams.get("country") ?? undefined;
-  const radiusKm = parseFloat(searchParams.get("radiusKm") ?? "3000");
-  const onlineOnly = searchParams.get("onlineOnly") === "1";
+  const radiusKm = parseFloat(searchParams.get("radiusKm") ?? "1000");
+  const includeOnline = searchParams.get("includeOnline") === "1";
 
   // Don't cache when a search query is active (results are unique per user input)
   const cacheKey = q
     ? null
-    : `events::conftech::${lat.toFixed(3)}::${lng.toFixed(3)}::${page}::${radiusKm}::${onlineOnly ? "online" : country ?? ""}::${startDate ?? ""}::${endDate ?? ""}`;
+    : `events::conftech::${lat.toFixed(3)}::${lng.toFixed(3)}::${page}::${radiusKm}::${includeOnline ? "ol" : ""}::${country ?? ""}::${startDate ?? ""}::${endDate ?? ""}`;
 
   if (cacheKey) {
     const cached = getCache<EventsPage>(cacheKey);
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await fetchConftechEvents({ lat, lng, radiusKm, page, startDate, endDate, q, country, onlineOnly });
+    const result = await fetchConftechEvents({ lat, lng, radiusKm, page, startDate, endDate, q, country, includeOnline });
     if (cacheKey) setCache(cacheKey, result, 5 * 60 * 1_000); // 5-minute cache
     return NextResponse.json(result, { headers: { "X-Cache": "MISS" } });
   } catch (err) {
