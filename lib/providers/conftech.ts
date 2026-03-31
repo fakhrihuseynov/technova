@@ -204,20 +204,23 @@ export async function fetchConftechEvents(
     };
   });
 
-  // Pool: purely-online events always included; physical/hybrid filtered by radius
-  const pool = annotated.filter((x) => x.isPurelyOnline || x.dist <= radiusKm);
-
-  // Collect all unique countries (before search/country filter) for the dropdown
+  // Collect ALL unique countries from the full date-filtered set (before any radius
+  // or online filter) so the dropdown always shows the complete worldwide list.
   const availableCountries = Array.from(
     new Set(
-      pool
-        .map((x) => x.ev.country)
+      dateFiltered
+        .map((ev) => ev.country)
         .filter((c) => c && c !== "Worldwide")
     )
   ).sort();
 
-  // Apply optional name search (case-insensitive substring)
-  const { q, country, onlineOnly } = params;
+  // Pool: by default exclude purely-online events; include them only when requested
+  const { q, country, includeOnline } = params;
+  const pool = annotated.filter((x) =>
+    (includeOnline ? true : !x.isPurelyOnline) &&
+    (x.isPurelyOnline || x.dist <= radiusKm)
+  );
+
   let filtered = pool;
   if (q && q.trim()) {
     const needle = q.trim().toLowerCase();
@@ -227,9 +230,7 @@ export async function fetchConftechEvents(
       (x.ev.category ?? "").toLowerCase().includes(needle)
     );
   }
-  if (onlineOnly) {
-    filtered = filtered.filter((x) => x.isPurelyOnline);
-  } else if (country && country !== "all") {
+  if (country && country !== "all") {
     filtered = filtered.filter((x) => x.ev.country === country);
   }
 

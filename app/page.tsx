@@ -110,13 +110,15 @@ function LandingPage({
             disabled={detecting}
             className="flex items-center justify-center gap-2.5 w-full bg-green-600 hover:bg-green-700 active:bg-green-800 disabled:opacity-60 text-white font-semibold py-3.5 rounded-2xl transition-colors shadow-lg shadow-green-200"
           >
-            {detecting ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <MapPin className="w-5 h-5" />
-            )}
-            {detecting ? "Detecting location…" : "Use My Location"}
-            {!detecting && <ChevronRight className="w-4 h-4 ml-auto" />}
+            <span className="flex items-center gap-2.5 translate-x-3">
+              {detecting ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <MapPin className="w-5 h-5" />
+              )}
+              {detecting ? "Detecting location…" : "Use My Location"}
+              {!detecting && <ChevronRight className="w-4 h-4" />}
+            </span>
           </button>
 
           {/* Divider */}
