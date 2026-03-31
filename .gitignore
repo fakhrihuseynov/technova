@@ -1,0 +1,25 @@
+node_modules/
+dist/
+build/
+coverage/
+*.log
+.DS_Store
+.env
+.idea/
+.vscode/
+.next/
+# Optional: Ignore specific files or directories
+# For example, if you have a 'temp' directory for temporary files:
+temp/
+# Optional: Ignore specific file types
+*.tmp
+*.bak
+# Optional: Ignore specific configuration files
+config/*.json
+# Optional: Ignore specific IDE or editor files
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+# Optional: Ignore specific OS files
+Thumbs.db
+Desktop.ini

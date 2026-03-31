@@ -1,0 +1,15 @@
+app/
+  page.tsx
+  api/
+    events/route.ts
+    ai/route.ts
+components/
+  EventCard.tsx
+  EventGrid.tsx
+  Header.tsx
+  LocationPicker.tsx
+lib/
+  providers/
+    ticketmaster.ts
+    types.ts
+  ollama/
