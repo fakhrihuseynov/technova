@@ -137,7 +137,7 @@ function LandingPage({
                 setCityInput(e.target.value);
                 setErr("");
               }}
-              placeholder="e.g. Tbilisi, Georgia"
+              placeholder="e.g. London, UK"
               className="flex-1 border border-gray-300 rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
             />
             <button
@@ -189,6 +189,7 @@ export default function Home() {
       <Header
         onLocationChange={handleLocationChange}
         currentLocation={location.label}
+        onHome={() => setLocation(null)}
       />
       <main className="max-w-5xl mx-auto px-4">
         <div className="pt-4 pb-2 flex flex-col gap-0.5">
@@ -199,7 +200,7 @@ export default function Home() {
             </span>
           </p>
           <p className="text-xs text-gray-400">
-            Within 3,000 km &middot; online events worldwide &middot; sorted by proximity
+            Within 1,000 km &middot; online events worldwide &middot; sorted by proximity
           </p>
         </div>
         <EventGrid lat={location.lat} lng={location.lng} />

@@ -207,16 +207,42 @@ export async function fetchConftechEvents(
   // Pool: purely-online events always included; physical/hybrid filtered by radius
   const pool = annotated.filter((x) => x.isPurelyOnline || x.dist <= radiusKm);
 
-  // Sort: purely-online first → nearest physical → soonest date
-  pool.sort((a, b) => {
+  // Collect all unique countries (before search/country filter) for the dropdown
+  const availableCountries = Array.from(
+    new Set(
+      pool
+        .map((x) => x.ev.country)
+        .filter((c) => c && c !== "Worldwide")
+    )
+  ).sort();
+
+  // Apply optional name search (case-insensitive substring)
+  const { q, country, onlineOnly } = params;
+  let filtered = pool;
+  if (q && q.trim()) {
+    const needle = q.trim().toLowerCase();
+    filtered = filtered.filter((x) =>
+      x.ev.name.toLowerCase().includes(needle) ||
+      x.ev.city.toLowerCase().includes(needle) ||
+      (x.ev.category ?? "").toLowerCase().includes(needle)
+    );
+  }
+  if (onlineOnly) {
+    filtered = filtered.filter((x) => x.isPurelyOnline);
+  } else if (country && country !== "all") {
+    filtered = filtered.filter((x) => x.ev.country === country);
+  }
+
+  // Sort: online first → nearest physical → soonest date
+  filtered.sort((a, b) => {
     if (a.isPurelyOnline !== b.isPurelyOnline) return a.isPurelyOnline ? -1 : 1;
     if (a.dist !== b.dist) return a.dist - b.dist;
     return a.date - b.date;
   });
 
-  const total = pool.length;
+  const total = filtered.length;
   const totalPages = Math.ceil(total / size) || 1;
-  const slice = pool.slice(page * size, (page + 1) * size).map((x) => x.ev);
+  const slice = filtered.slice(page * size, (page + 1) * size).map((x) => x.ev);
 
-  return { events: slice, page, totalPages };
+  return { events: slice, page, totalPages, availableCountries };
 }

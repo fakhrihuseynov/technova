@@ -27,6 +27,12 @@ export interface FetchEventsParams {
   endDate?: string; // YYYY-MM-DD
   page?: number;
   size?: number;
+  /** Free-text search against event name */
+  q?: string;
+  /** Filter to a specific country (exact match from dataset) */
+  country?: string;
+  /** Show only purely-online events */
+  onlineOnly?: boolean;
 }
 
 // Pagination-aware response
@@ -34,6 +40,8 @@ export interface EventsPage {
   events: TechEvent[];
   page: number;
   totalPages: number;
+  /** All countries present in the unfiltered result set for this location */
+  availableCountries?: string[];
 }
 
 // AI enrichment result from Ollama
