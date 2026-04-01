@@ -129,17 +129,7 @@ export default function EventCard({ event }: EventCardProps) {
     .join("");
 
   return (
-    <article ref={cardRef} className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col relative cursor-pointer">
-      {/* Stretched link — makes whole card clickable without nesting <a> tags */}
-      {event.url && (
-        <a
-          href={event.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="absolute inset-0 z-50"
-          aria-label={`Open ${event.name}`}
-        />
-      )}
+    <article ref={cardRef} className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col">
       {/* Cover image / placeholder — always show gradient, overlay real image when loaded */}
       <div className={`w-full h-44 relative overflow-hidden bg-gradient-to-br ${gradient} flex flex-col items-center justify-center gap-2`}>
         {/* Decorative circles always visible beneath real image */}
@@ -249,8 +239,8 @@ export default function EventCard({ event }: EventCardProps) {
           )}
         </div>
 
-        {/* Action buttons — sit above the stretched link via z-index */}
-        <div className="relative z-20 flex flex-wrap gap-2 mt-auto pt-1">
+        {/* Action buttons */}
+        <div className="flex flex-wrap gap-2 mt-auto pt-1">
           {event.url && (
             <a
               href={event.url}
