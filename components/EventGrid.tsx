@@ -47,10 +47,12 @@ export default function EventGrid({ lat, lng }: EventGridProps) {
   const [maxDist, setMaxDist] = useState("1000");
   const [showOnline, setShowOnline] = useState(false);
   const [docked, setDocked] = useState(false);
+  const [filterBarHeight, setFilterBarHeight] = useState(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loaderRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
   const fetchingRef = useRef(false);
 
   // ── Core fetch ────────────────────────────────────────────────────────────
@@ -108,7 +110,14 @@ export default function EventGrid({ lat, lng }: EventGridProps) {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
     const observer = new IntersectionObserver(
-      ([entry]) => setDocked(!entry.isIntersecting),
+      ([entry]) => {
+        const nowDocked = !entry.isIntersecting;
+        if (nowDocked && filterRef.current) {
+          // Capture height before switching to fixed so placeholder is accurate
+          setFilterBarHeight(filterRef.current.offsetHeight);
+        }
+        setDocked(nowDocked);
+      },
       { rootMargin: "-57px 0px 0px 0px", threshold: 0 }
     );
     observer.observe(sentinel);
@@ -171,15 +180,19 @@ export default function EventGrid({ lat, lng }: EventGridProps) {
           (past the sticky header) the observer flips docked=true. */}
       <div ref={sentinelRef} className="h-px" />
 
+      {/* Placeholder that fills the vacated space when bar switches to fixed */}
+      {docked && <div style={{ height: filterBarHeight }} aria-hidden />}
+
       {/* ── Search & filter bar ─────────────────────────────────────────── */}
       <div
-        className={`sticky top-[57px] z-40 transition-all duration-200 ${
+        ref={filterRef}
+        className={`z-[60] transition-[background-color,box-shadow] duration-150 ${
           docked
-            ? "bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm -ml-[max(1rem,calc(50vw-31rem))] w-screen py-2.5 mb-3"
-            : "mb-5"
+            ? "fixed top-[57px] left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm py-2.5"
+            : "sticky top-[57px] mb-4 py-2.5"
         }`}
       >
-        <div className={`max-w-5xl mx-auto flex flex-col sm:flex-row gap-2${docked ? " px-4" : ""}`}>
+        <div className={`flex flex-col sm:flex-row gap-2${docked ? " max-w-5xl mx-auto px-4" : ""}`}>
         {/* Name search */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -326,7 +339,7 @@ export default function EventGrid({ lat, lng }: EventGridProps) {
         <p className="text-center text-sm text-gray-400 pb-8">
           {isFiltered
             ? `${events.length} result${events.length !== 1 ? "s" : ""} found`
-            : "You've seen all nearby events! 🎉"}
+            : "Loaded all nearby events!"}
         </p>
       )}
     </div>
