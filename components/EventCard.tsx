@@ -47,19 +47,8 @@ export default function EventCard({ event }: EventCardProps) {
   const [ogImage, setOgImage] = useState<string | null>(null);
   const cardRef = useRef<HTMLElement>(null);
 
-  // Fetch OG image from the conference URL server-side proxy
-  useEffect(() => {
-    if (!event.url) return;
-    let cancelled = false;
-    fetch(`/api/og?url=${encodeURIComponent(event.url)}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (!cancelled && d?.image) setOgImage(d.image); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [event.url]);
-
-  // Only call Ollama when this card enters the viewport — avoids 20 simultaneous
-  // requests on mount which queue up and make every card appear stuck loading.
+  // Viewport-gate BOTH og-image fetch and AI enrichment — prevents 20+ simultaneous
+  // requests on mount which queue up and cause timeouts.
   useEffect(() => {
     let cancelled = false;
 
@@ -71,6 +60,15 @@ export default function EventCard({ event }: EventCardProps) {
         if (!entry.isIntersecting) return;
         observer.disconnect();
 
+        // ── OG image ──────────────────────────────────────────────────────────
+        if (event.url) {
+          fetch(`/api/og?url=${encodeURIComponent(event.url)}`)
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d) => { if (!cancelled && d?.image) setOgImage(d.image); })
+            .catch(() => {});
+        }
+
+        // ── AI enrichment ─────────────────────────────────────────────────────
         async function enrich() {
           try {
             const res = await fetch("/api/ai", {
@@ -96,12 +94,12 @@ export default function EventCard({ event }: EventCardProps) {
 
         enrich();
       },
-      { rootMargin: "200px" } // start fetching slightly before the card is fully visible
+      { rootMargin: "300px" } // start fetching before the card is fully visible
     );
 
     observer.observe(node);
     return () => { cancelled = true; observer.disconnect(); };
-  }, [event.id, event.name, event.category, event.venueName, event.city, event.country]);
+  }, [event.id, event.url, event.name, event.category, event.venueName, event.city, event.country]);
 
   const coverImg = ogImage ?? event.images?.[0];
   const isOnline = event.venueName === "Online Event" || event.country === "Worldwide";
@@ -138,7 +136,7 @@ export default function EventCard({ event }: EventCardProps) {
           href={event.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute inset-0 z-10"
+          className="absolute inset-0 z-50"
           aria-label={`Open ${event.name}`}
         />
       )}
@@ -147,17 +145,21 @@ export default function EventCard({ event }: EventCardProps) {
         {/* Decorative circles always visible beneath real image */}
         <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10" />
         <div className="absolute -bottom-8 -left-4 w-36 h-36 rounded-full bg-black/10" />
-        <span className="text-5xl font-extrabold text-white/90 drop-shadow select-none z-10">
-          {initials}
-        </span>
-        {event.category && (
-          <span className="text-xs font-semibold text-white/80 uppercase tracking-widest z-10">
-            {event.category}
-          </span>
+        {!coverImg && (
+          <>
+            <span className="text-5xl font-extrabold text-white/90 drop-shadow select-none z-10">
+              {initials}
+            </span>
+            {event.category && (
+              <span className="text-xs font-semibold text-white/80 uppercase tracking-widest z-10">
+                {event.category}
+              </span>
+            )}
+          </>
         )}
         {/* Online badge */}
         {isOnline && (
-          <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-green-500 text-white text-xs font-semibold rounded-full px-2.5 py-1 shadow-sm">
+          <div className="absolute top-3 right-3 z-30 flex items-center gap-1.5 bg-green-500 text-white text-xs font-semibold rounded-full px-2.5 py-1 shadow-sm">
             <Wifi className="w-3 h-3" />
             Online
           </div>
@@ -168,7 +170,7 @@ export default function EventCard({ event }: EventCardProps) {
           <img
             src={coverImg}
             alt={event.name}
-            className="absolute inset-0 w-full h-full object-cover animate-fadeIn"
+            className="absolute inset-0 w-full h-full object-cover animate-fadeIn z-20"
             loading="lazy"
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
