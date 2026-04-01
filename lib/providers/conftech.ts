@@ -121,10 +121,18 @@ const COUNTRY_CENTROIDS: Record<string, [number, number]> = {
   "Slovakia": [48.67, 19.70], "Croatia": [45.10, 15.20],
   "Serbia": [44.02, 21.01], "Bulgaria": [42.73, 25.49],
   "Ukraine": [48.38, 31.17], "Russia": [61.52, 105.32],
+  "Latvia": [56.88, 24.60], "Lithuania": [55.17, 23.88],
+  "Estonia": [58.60, 25.01], "Slovenia": [46.15, 14.99],
+  "Ireland": [53.41, -8.24], "Luxembourg": [49.82, 6.13],
+  "Iceland": [64.96, -19.02], "Belarus": [53.71, 27.97],
+  "Moldova": [47.41, 28.37], "North Macedonia": [41.61, 21.74],
+  "Bosnia": [43.92, 17.67], "Montenegro": [42.71, 19.37],
+  "Albania": [41.15, 20.17], "Kosovo": [42.60, 20.90],
+  "Malta": [35.94, 14.37], "Cyprus": [35.13, 33.43],
   // Middle East / Caucasus
   "Turkey": [38.96, 35.24], "Azerbaijan": [40.14, 47.58],
   "Georgia": [42.32, 43.36], "Armenia": [40.07, 45.04],
-  "Israel": [31.05, 34.85], "UAE": [23.42, 53.85],
+  "Israel": [31.05, 34.85], "UAE": [23.42, 53.85], "United Arab Emirates": [23.42, 53.85],
   "Saudi Arabia": [23.89, 45.08],
   // Asia-Pacific
   "India": [20.59, 78.96], "Japan": [36.20, 138.25],
@@ -132,9 +140,13 @@ const COUNTRY_CENTROIDS: Record<string, [number, number]> = {
   "Singapore": [1.35, 103.82], "Australia": [-25.27, 133.78],
   "New Zealand": [-40.90, 174.89], "Thailand": [15.87, 100.99],
   "Indonesia": [-0.79, 113.92], "Philippines": [12.88, 121.77],
+  "Taiwan": [23.70, 120.96], "Vietnam": [14.06, 108.28],
+  "Malaysia": [4.21, 101.98],
   // Africa
   "South Africa": [-30.56, 22.94], "Nigeria": [9.08, 8.68],
-  "Kenya": [-0.02, 37.91], "Egypt": [26.82, 30.80],
+  "Kenya": [-0.02, 37.91], "Egypt": [26.82, 30.80], "Tunisia": [33.89, 9.54],
+  // UK regions
+  "Scotland": [56.49, -4.20],
 };
 
 function distanceToConference(
