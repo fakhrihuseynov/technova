@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   title: "TechNova – Tech Events Near You",
   description:
     "Discover technology events happening near you, summarised and curated by AI.",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
   openGraph: {
     title: "TechNova",
     description: "Discover tech events near you – powered by AI.",

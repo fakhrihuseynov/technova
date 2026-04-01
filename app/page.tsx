@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Zap, Search, Loader2, ChevronRight } from "lucide-react";
+import { MapPin, Search, Loader2, ChevronRight } from "lucide-react";
 import Header from "@/components/Header";
 import EventGrid from "@/components/EventGrid";
 
@@ -91,11 +91,8 @@ function LandingPage({
       {/* Hero */}
       <main className="flex flex-col items-center justify-center flex-1 px-4 text-center gap-10">
         <div className="flex flex-col items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Zap className="w-8 h-8 text-green-600" />
-            <span className="text-5xl font-extrabold text-green-700 tracking-tight">
-              TechNova
-            </span>
+          <div>
+            <img src="/logo.svg" alt="TechNova" className="w-64 h-auto" />
           </div>
           <p className="text-gray-500 text-lg max-w-xs sm:max-w-sm">
             Discover tech events near you, summarised and curated by AI.
