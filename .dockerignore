@@ -1,0 +1,29 @@
+# dependencies
+node_modules
+npm-debug.log*
+
+# Next.js build output
+.next
+out
+
+# local env files
+.env
+.env.local
+.env.*.local
+
+# misc
+.DS_Store
+*.pem
+.git
+.gitignore
+.github
+
+# editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# source assets not needed in image
+logo-hq.png
+cool-svg.svg
