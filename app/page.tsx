@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MapPin, Search, Loader2, ChevronRight } from "lucide-react";
 import Header from "@/components/Header";
 import EventGrid from "@/components/EventGrid";
+import Footer from "@/components/Footer";
 
 interface Location {
   lat: number;
@@ -159,14 +160,8 @@ function LandingPage({
           )}
         </div>
 
-        {/* Footer note */}
-        <p className="text-xs text-gray-400 max-w-xs">
-          Events powered by{" "}
-          <a href="https://confs.tech" target="_blank" rel="noopener noreferrer" className="font-medium text-gray-500 hover:underline">confs.tech</a> ·
-          Summaries by{" "}
-          <span className="font-medium text-gray-500">Ollama AI</span>
-        </p>
       </main>
+      <Footer />
     </div>
   );
 }
@@ -184,13 +179,13 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header
         onLocationChange={handleLocationChange}
         currentLocation={location.label}
         onHome={() => setLocation(null)}
       />
-      <main className="max-w-5xl mx-auto px-4">
+      <main className="max-w-5xl mx-auto px-4 flex-1 w-full">
         <div className="pt-4 pb-2 flex flex-col gap-0.5">
           <p className="text-sm text-gray-500">
             Tech conferences near{" "}
@@ -204,6 +199,7 @@ export default function Home() {
         </div>
         <EventGrid lat={location.lat} lng={location.lng} />
       </main>
+      <Footer />
     </div>
   );
 }
