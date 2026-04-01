@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Zap, LocateFixed, Loader2 } from "lucide-react";
+import { MapPin, LocateFixed, Loader2 } from "lucide-react";
 import LocationPicker from "./LocationPicker";
 
 interface HeaderProps {
@@ -51,12 +51,9 @@ export default function Header({
         {/* Logo — click to return to landing */}
         <button
           onClick={onHome}
-          className="flex items-center gap-2 flex-shrink-0 hover:opacity-75 transition-opacity"
+          className="flex-shrink-0 hover:opacity-75 transition-opacity"
         >
-          <Zap className="w-5 h-5 text-green-600" />
-          <span className="font-extrabold text-lg text-green-700 tracking-tight">
-            TechNova
-          </span>
+          <img src="/logo.svg" alt="TechNova" className="h-10 w-auto" />
         </button>
 
         {/* Month badge */}
