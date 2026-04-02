@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, LocateFixed, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { MapPin, LocateFixed, Loader2, Settings } from "lucide-react";
 import LocationPicker from "./LocationPicker";
 
 interface HeaderProps {
@@ -75,6 +76,11 @@ export default function Header({
             ? <Loader2 className="w-4 h-4 animate-spin" />
             : <LocateFixed className="w-4 h-4" />}
         </button>
+
+        {/* Settings */}
+        <Link href="/settings" className="flex-shrink-0 p-2 rounded-xl text-gray-400 hover:text-gray-800 hover:bg-gray-50 transition-colors" title="Settings">
+          <Settings className="w-4 h-4" />
+        </Link>
 
         {/* Location */}
         <div className="flex items-center gap-1.5 min-w-0 max-w-xs w-full sm:w-auto">

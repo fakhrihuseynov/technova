@@ -31,9 +31,15 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Check for a per-user model selection stored as a cookie named
+    // `OLLAMA_MODEL`. If present, pass it as an override to the enrichment
+    // function so each user can pick their preferred model.
+    const selectedModel = req.cookies.get("OLLAMA_MODEL")?.value;
+
     const enrichment = await enrichEventWithAI(
       eventName,
-      description ?? ""
+      description ?? "",
+      selectedModel
     );
 
     // Cache AI result for 60 minutes
